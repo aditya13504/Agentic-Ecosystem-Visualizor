@@ -142,10 +142,6 @@ agentic_ecosystem/
 
 ## Authors
 --ADITYA GUPTA
---PRIYAM GANGULI
---SHINIE AGGARWAL
---VEDANT MAHAJAN
---ADITYA
 
 ## 📜 License
 
