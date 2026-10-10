@@ -49,7 +49,9 @@ web deployment on Render.
 
 Ecosystem generation still requires the Modal functions deployed separately
 with `modal deploy modal_functions_fixed.py` and valid Modal credentials
-configured as a secret in the Render service. No credential is committed here.
+configured in the Render service as `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET`.
+Render prompts for these values when creating the Blueprint service. No
+credential is committed here.
 The optional Stable Diffusion visualizer is not available on this lightweight
 free-tier interface.
 
