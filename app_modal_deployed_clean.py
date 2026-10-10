@@ -546,7 +546,7 @@ nature_theme = gr.themes.Soft().set(
     button_secondary_text_color="#155724"  # Darker green text
 )
 
-with gr.Blocks(title="Agentic Ecosystem Simulator", theme=nature_theme, css="""
+with gr.Blocks(title="Agentic Ecosystem Simulator", theme=nature_theme, analytics_enabled=False, css="""
 /* Additional custom CSS for darker nature theme */
 .gradio-container {
     background: linear-gradient(135deg, #c8e6c8 0%, #b8d4e8 50%, #d0e2f0 100%);
@@ -716,5 +716,4 @@ if __name__ == "__main__":
         server_port=int(os.environ.get("PORT", "7862")),
         share=False,
         show_error=True,
-        analytics_enabled=False,
     )
