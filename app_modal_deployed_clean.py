@@ -1,3 +1,4 @@
+import sys
 import json
 import gradio as gr
 import time
@@ -37,9 +38,10 @@ def simulate_ecosystem_step(environment):
     try:
         print(f"🌱 Simulating ecosystem for environment: {environment}")
         
-        # Call deployed Modal function using the new API
+        # Bound the wait so a cold or unavailable Modal deployment cannot leave
+        # the interface spinning indefinitely.
         f = modal.Function.from_name("agentic-ecosystem-simple", "simulate_ecosystem")
-        results = f.remote(environment)
+        results = f.spawn(environment).get(timeout=60)
             
         # Check for errors
         if 'error' in results and results['error']:
@@ -62,22 +64,20 @@ def simulate_ecosystem_step(environment):
             # For now, we'll skip this
             audio = None
         
-        # Generate visualization if available
-        visualization = None
-        if HAS_VISUALIZATION:
-            try:
-                print("🎨 Generating ecosystem visualization...")
-                print("⏳ This may take 2-5 minutes on first run (downloading model) or when using CPU...")
-                
-                # Generate visualization in background to avoid blocking
-                def generate_viz():
-                    return visualizer.generate_ecosystem_animation(environment)
-                
-                # Start in a separate thread with longer timeout for first-time model download
-                with ThreadPoolExecutor() as executor:
-                    future = executor.submit(generate_viz)
-                    try:
-                        visualization = future.result(timeout=90000)  # Allow up to 5 minutes for model download + generation
+        print("🎉 Ecosystem simulation completed!")
+
+        return (
+            species_list,
+            events,
+            summary,
+            audio,
+            None
+        )
+        
+    except Exception as e:
+        print(f"Error in ecosystem simulation: {e}")
+        return None, [], f"Simulation error: {str(e)}", None, None
+
 def generate_ecosystem_visualization(environment):
     """Generate a visualization only when explicitly requested."""
     if not environment or not environment.strip():
@@ -180,43 +180,6 @@ def generate_procedural_animation(environment):
         optimize=True,
     )
     return output_path
-
-                    except TimeoutError:
-                        print("⚠️ Visualization generation timed out - this can happen on first run or with slow hardware")
-                        visualization = None
-                        
-                if visualization and os.path.exists(visualization):
-                    print(f"✓ Visualization generated successfully: {visualization}")
-                    # Ensure we're returning the absolute path for Gradio
-                    visualization = os.path.abspath(visualization)
-                    print(f"✓ Returning absolute path: {visualization}")
-                else:
-                    print(f"⚠️ Visualization generation returned invalid file. Result: {visualization}")
-                    if visualization:
-                        print(f"⚠️ File exists check: {os.path.exists(visualization)}")
-                    visualization = None
-                    
-            except Exception as viz_error:
-                print(f"⚠️ Visualization error: {viz_error}")
-                import traceback
-                traceback.print_exc()
-                visualization = None
-        else:
-            print("⚠️ Visualization module not available")
-        
-        print("🎉 Ecosystem simulation completed!")
-        
-        return (
-            species_list,
-            events,
-            summary,
-            audio,
-            visualization
-        )
-        
-    except Exception as e:
-        print(f"Error in ecosystem simulation: {e}")
-        return None, [], f"Simulation error: {str(e)}", None, None
 
 def check_modal_deployment():
     """Check if Modal is properly configured"""
@@ -735,10 +698,6 @@ body,
     
     **The more detailed your environment description, the more tailored your ecosystem will be!**
     
-    visualize_btn = gr.Button(
-        "🎨 Generate Visualization (may take several minutes)",
-        variant="secondary",
-    )
     🚀 **Deployment note**: Ecosystem generation requires the separately deployed Modal functions and valid Modal credentials. Without them, the interface remains available but generation will report a configuration error.
     """)
     
@@ -776,13 +735,11 @@ body,
             height=400,
             type="filepath"  # Ensure Gradio treats the output as a file path
         )
-
-    visualize_btn.click(
-        fn=generate_ecosystem_visualization,
-        inputs=[environment_input],
-        outputs=[visualization_output]
+    visualize_btn = gr.Button(
+        "🎨 Generate Visualization (may take several minutes)",
+        variant="secondary",
     )
-
+    
     with gr.Row():
         with gr.Column():
             events_output = gr.Textbox(
@@ -819,7 +776,13 @@ body,
         inputs=[environment_input],
         outputs=[species_output, events_output, summary_output, audio_output, visualization_output]
     )
-    
+
+    visualize_btn.click(
+        fn=generate_ecosystem_visualization,
+        inputs=[environment_input],
+        outputs=[visualization_output]
+    )
+
     narrate_btn.click(
         fn=lambda summary, voice, events: generate_narration_with_voice(summary, voice_options.get(voice, "auto"), events),
         inputs=[summary_output, voice_selection, events_output],
