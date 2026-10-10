@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: agentic-ecosystem-simulator
+    env: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements-render.txt
+    startCommand: python app_modal_deployed_clean.py
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.11

@@ -532,39 +532,86 @@ voice_options = get_available_voices()
 voice_choices = [choice for choice in voice_options.keys() if choice != "separator"]
 voice_values = [voice_options[choice] for choice in voice_choices]
 
-# Create custom nature-themed color scheme with darker green and light blue mix
-nature_theme = gr.themes.Soft().set(
-    body_background_fill="#d4edda",  # Darker light green background
-    background_fill_primary="#e8f5e8",  # Medium light green
-    background_fill_secondary="#d6ebf5",  # Darker light blue
-    block_background_fill="#f8f9fa",  # Off-white for content blocks
-    button_primary_background_fill="#1e7e34",  # Darker forest green for primary buttons
-    button_primary_background_fill_hover="#28a745",  # Medium green on hover
-    button_primary_text_color="#ffffff",
-    button_secondary_background_fill="#c3e6cb",  # Darker light green for secondary buttons
-    button_secondary_background_fill_hover="#b3d7e6",  # Darker light blue on hover
-    button_secondary_text_color="#155724"  # Darker green text
-)
+# Create a base light theme, then override the specific colors in CSS for accessibility.
+nature_theme = gr.themes.Soft()
 
 with gr.Blocks(title="Agentic Ecosystem Simulator", theme=nature_theme, analytics_enabled=False, css="""
-/* Additional custom CSS for darker nature theme */
+/* Ensure the whole page and all interface text are readable on light nature background */
+html, body {
+    background: linear-gradient(135deg, #edf7ee 0%, #eaf3fb 50%, #f2f7fa 100%) !important;
+    color: #0f172a !important;
+}
+
+body,
+.gradio-container,
+.gradio-container * {
+    color: #0f172a !important;
+}
+
 .gradio-container {
-    background: linear-gradient(135deg, #c8e6c8 0%, #b8d4e8 50%, #d0e2f0 100%);
+    background: linear-gradient(135deg, #edf7ee 0%, #eaf3fb 50%, #f2f7fa 100%);
     min-height: 100vh;
 }
 
-/* Card-like styling for content blocks with darker accents */
-.block {
-    background: rgba(248, 249, 250, 0.95);
-    border-radius: 8px;
-    border: 1px solid #6c9a6c;
-    box-shadow: 0 2px 8px rgba(28, 126, 52, 0.1);
+.gradio-container :is(p, li, label, strong, em, h1, h2, h3, h4, .prose, .wrap, span, div) {
+    color: #0f172a !important;
 }
 
-/* Nature-themed headers with darker colors */
-h1, h2, h3 {
-    color: #155724;
-    text-shadow: 1px 1px 2px rgba(28, 126, 52, 0.15);
+.gradio-container .block,
+.gradio-container [data-testid="block"],
+.gradio-container [data-testid="panel"] {
+    background-color: #ffffff !important;
+    border-radius: 12px;
+    border: 1px solid #a8bfa9 !important;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+}
+
+.gradio-container input,
+.gradio-container textarea,
+.gradio-container [role="textbox"],
+.gradio-container [role="combobox"],
+.gradio-container [role="listbox"],
+.gradio-container [role="option"] {
+    color: #0f172a !important;
+    background-color: #ffffff !important;
+    border-color: #667085 !important;
+}
+
+.gradio-container input::placeholder,
+.gradio-container textarea::placeholder {
+    color: #475467 !important;
+    opacity: 1;
+}
+
+.gradio-container button.secondary,
+.gradio-container button:not(.primary) {
+    background-color: #d8efdc !important;
+    color: #123a2a !important;
+    border-color: #9ec0a1 !important;
+}
+
+.gradio-container button.primary,
+.gradio-container button[type="button"].primary,
+.gradio-container button[class*="primary"] {
+    background-color: #1f6f43 !important;
+    color: #ffffff !important;
+    border-color: #1f6f43 !important;
+}
+
+.gradio-container button.primary:hover,
+.gradio-container button[class*="primary"]:hover {
+    background-color: #2d8a57 !important;
+}
+
+.gradio-container button:disabled {
+    color: #475467 !important;
+    opacity: 1;
+}
+
+.gradio-container .label-wrap,
+.gradio-container .block-label,
+.gradio-container .label {
+    color: #0f172a !important;
 }
 """) as demo:
     gr.Markdown("""
