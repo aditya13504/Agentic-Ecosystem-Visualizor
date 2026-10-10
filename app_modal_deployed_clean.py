@@ -8,7 +8,10 @@ import tempfile
 import os
 import re
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
+from PIL import Image, ImageDraw, ImageFont
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 # Import the visualization module
 try:
@@ -75,6 +78,109 @@ def simulate_ecosystem_step(environment):
                     future = executor.submit(generate_viz)
                     try:
                         visualization = future.result(timeout=90000)  # Allow up to 5 minutes for model download + generation
+def generate_ecosystem_visualization(environment):
+    """Generate a visualization only when explicitly requested."""
+    if not environment or not environment.strip():
+        return None
+
+    if HAS_VISUALIZATION:
+        visualization = visualizer.generate_ecosystem_animation(environment)
+    else:
+        visualization = generate_procedural_animation(environment)
+    if not visualization or not os.path.exists(visualization):
+        raise gr.Error("Visualization generation did not produce an image. Check the app logs for details.")
+    return os.path.abspath(visualization)
+
+def generate_procedural_animation(environment):
+    """Create a lightweight animated ecosystem scene when diffusion is unavailable."""
+    width, height = 640, 400
+    environment_label = environment.strip()
+    if len(environment_label) > 56:
+        environment_label = environment_label[:53] + "..."
+
+    frames = []
+    for frame_index in range(8):
+        frame = Image.new("RGB", (width, height), "#dceefa")
+        draw = ImageDraw.Draw(frame)
+
+        for y in range(height):
+            blend = y / height
+            color = (
+                int(220 - 35 * blend),
+                int(238 - 5 * blend),
+                int(250 - 40 * blend),
+            )
+            draw.line((0, y, width, y), fill=color)
+
+        sun_x = 515 + int(3 * (frame_index % 4))
+        draw.ellipse((sun_x - 30, 62, sun_x + 30, 122), fill="#ffd166")
+
+        for cloud_x in (90, 290):
+            cloud_x = (cloud_x + frame_index * 5) % (width + 100) - 50
+            draw.ellipse((cloud_x, 82, cloud_x + 56, 107), fill="#ffffff")
+            draw.ellipse((cloud_x + 18, 70, cloud_x + 58, 106), fill="#ffffff")
+            draw.ellipse((cloud_x + 38, 82, cloud_x + 78, 107), fill="#ffffff")
+
+        draw.polygon([(0, 255), (170, 155), (340, 255)], fill="#91bd91")
+        draw.polygon([(220, 255), (445, 145), (640, 255)], fill="#78aa7c")
+        draw.rectangle((0, 250, width, height), fill="#76a96d")
+        draw.ellipse((160, 210, 505, 330), fill="#84b878")
+
+        is_wetland = any(
+            word in environment.lower()
+            for word in ("lake", "pond", "river", "stream", "wetland", "marsh")
+        )
+        if is_wetland:
+            draw.polygon(
+                [(0, 320), (145, 295), (300, 330), (475, 300), (640, 325),
+                 (640, 365), (470, 342), (290, 372), (130, 340), (0, 365)],
+                fill="#72bfd1",
+            )
+
+        for tree_x, tree_y, size in ((95, 233, 1.0), (535, 225, 0.85)):
+            sway = int(3 * ((frame_index % 4) - 1.5))
+            trunk_top = tree_y - int(70 * size)
+            draw.rectangle(
+                (tree_x - 6, trunk_top, tree_x + 6, tree_y + 26),
+                fill="#795548",
+            )
+            draw.ellipse(
+                (tree_x - 31 + sway, trunk_top - 23, tree_x + 31 + sway, trunk_top + 29),
+                fill="#3e8050",
+            )
+            draw.ellipse(
+                (tree_x - 23 + sway, trunk_top - 43, tree_x + 23 + sway, trunk_top + 10),
+                fill="#4d965c",
+            )
+
+        for flower_x in range(205, 465, 37):
+            flower_y = 315 + ((flower_x // 37) % 3) * 10
+            sway = int(2 * ((frame_index % 4) - 1.5))
+            draw.line((flower_x, flower_y, flower_x + sway, flower_y - 15), fill="#39734a", width=2)
+            petal_x = flower_x + sway
+            draw.ellipse((petal_x - 5, flower_y - 23, petal_x + 5, flower_y - 13), fill="#fff3a6")
+            draw.ellipse((petal_x - 10, flower_y - 18, petal_x, flower_y - 8), fill="#f28c8c")
+            draw.ellipse((petal_x, flower_y - 18, petal_x + 10, flower_y - 8), fill="#f28c8c")
+
+        draw.rounded_rectangle((18, 18, width - 18, 54), radius=10, fill="#ffffff")
+        draw.text((30, 29), environment_label, fill="#173b26", font=ImageFont.load_default())
+        frames.append(frame)
+
+    with tempfile.NamedTemporaryFile(
+        prefix="ecosystem_viz_", suffix=".gif", delete=False
+    ) as output_file:
+        output_path = output_file.name
+
+    frames[0].save(
+        output_path,
+        save_all=True,
+        append_images=frames[1:],
+        duration=150,
+        loop=0,
+        optimize=True,
+    )
+    return output_path
+
                     except TimeoutError:
                         print("⚠️ Visualization generation timed out - this can happen on first run or with slow hardware")
                         visualization = None
@@ -629,6 +735,10 @@ body,
     
     **The more detailed your environment description, the more tailored your ecosystem will be!**
     
+    visualize_btn = gr.Button(
+        "🎨 Generate Visualization (may take several minutes)",
+        variant="secondary",
+    )
     🚀 **Deployment note**: Ecosystem generation requires the separately deployed Modal functions and valid Modal credentials. Without them, the interface remains available but generation will report a configuration error.
     """)
     
@@ -666,7 +776,13 @@ body,
             height=400,
             type="filepath"  # Ensure Gradio treats the output as a file path
         )
-    
+
+    visualize_btn.click(
+        fn=generate_ecosystem_visualization,
+        inputs=[environment_input],
+        outputs=[visualization_output]
+    )
+
     with gr.Row():
         with gr.Column():
             events_output = gr.Textbox(

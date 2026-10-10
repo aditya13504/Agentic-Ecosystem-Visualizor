@@ -52,8 +52,10 @@ with `modal deploy modal_functions_fixed.py` and valid Modal credentials
 configured in the Render service as `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET`.
 Render prompts for these values when creating the Blueprint service. No
 credential is committed here.
-The optional Stable Diffusion visualizer is not available on this lightweight
-free-tier interface.
+The lightweight free-tier interface keeps the visualization button available
+and generates an animated ecosystem scene without Stable Diffusion. Local
+installations with the optional Stable Diffusion dependencies use the
+higher-detail image-based animation instead.
 
 ### Optional: Enable Visualization (Recommended)
 For the visualization feature, additional dependencies are required:
@@ -76,12 +78,12 @@ chmod +x install_visualization.sh
 1. **Open your browser** to `http://127.0.0.1:7862` (or the provided shared URL)
 2. **Enter an environment** like "tropical rainforest with morning mist"
 3. **Click "Simulate Ecosystem Day"**
-4. **Watch the magic happen**:
+4. **View the text results**:
    - JSON of generated species appears
    - Daily interactions are simulated
    - Events are summarized intelligently
-   - Visual animation of your ecosystem displays
    - Use the voice selector to generate audio narration
+5. **Optional:** Click "Generate Visualization" to create an animated image. This can take several minutes, especially on the first run or without a GPU, and does not block the text results.
 
 ### 🎨 Example Environments to Try
 - `tropical rainforest with high humidity and colorful birds`
