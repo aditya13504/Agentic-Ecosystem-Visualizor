@@ -28,6 +28,20 @@ modal deploy modal_functions_fixed.py
 python app_modal_deployed_clean.py
 ```
 
+### Render web interface
+
+The Gradio interface can run on a Render Free Web Service without installing
+the optional Stable Diffusion/PyTorch visualization stack. Set the build
+command to `pip install -r requirements-render.txt` and the start command to
+`python app_modal_deployed_clean.py`. The launcher binds to Render's `PORT`
+and does not create a Gradio share URL.
+
+Ecosystem generation still requires the Modal functions deployed separately
+with `modal deploy modal_functions_fixed.py` and valid Modal credentials
+configured as a secret in the Render service. No credential is committed here.
+The optional Stable Diffusion visualizer is not available on this lightweight
+free-tier interface.
+
 ### Optional: Enable Visualization (Recommended)
 For the visualization feature, additional dependencies are required:
 

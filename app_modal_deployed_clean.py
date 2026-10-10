@@ -582,7 +582,7 @@ h1, h2, h3 {
     
     **The more detailed your environment description, the more tailored your ecosystem will be!**
     
-    🚀 **Status**: Using Modal deployment with enhanced visualization capabilities
+    🚀 **Deployment note**: Ecosystem generation requires the separately deployed Modal functions and valid Modal credentials. Without them, the interface remains available but generation will report a configuration error.
     """)
     
     with gr.Row():
@@ -598,7 +598,7 @@ h1, h2, h3 {
             
             modal_status = gr.Textbox(
                 label="🖥️ Modal Status",
-                value="Click 'Check Modal' to see status",
+                value="Check Modal to verify that remote functions and credentials are configured.",
                 lines=4,
                 interactive=False
             )
@@ -700,7 +700,7 @@ if __name__ == "__main__":
     print("="*60)
     print("\n🚀 Starting cloud-based orchestrator interface...")
     print("\n📋 SETUP STATUS:")
-    print("✅ Modal functions deployed to cloud")
+    print("ℹ️ Modal functions must be deployed separately and credentials configured")
     print("✅ Enhanced version with environment-aware features")
     
     if HAS_VISUALIZATION:
@@ -712,8 +712,9 @@ if __name__ == "__main__":
     print("="*60)
     
     demo.launch(
-        server_name="127.0.0.1",
-        server_port=7862,
-        share=True,
-        show_error=True
+        server_name="0.0.0.0",
+        server_port=int(os.environ.get("PORT", "7862")),
+        share=False,
+        show_error=True,
+        analytics_enabled=False,
     )
